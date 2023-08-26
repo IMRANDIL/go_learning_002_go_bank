@@ -1,11 +1,18 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/gorilla/mux"
 )
+
+func writeJSON(w http.ResponseWriter, status int, v any) error {
+	w.WriteHeader(status)
+	w.Header().Set("Content-Type", "application/json")
+	return json.NewEncoder(w).Encode(v)
+}
 
 type apiFunc func(http.ResponseWriter, *http.Request) error
 
