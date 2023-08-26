@@ -9,8 +9,8 @@ import (
 )
 
 func writeJSON(w http.ResponseWriter, status int, v any) error {
+	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
-	w.Header().Set("Content-Type", "application/json")
 	return json.NewEncoder(w).Encode(v)
 }
 
@@ -30,12 +30,14 @@ func (s *APIServer) makeHTTPHandleFunc(f apiFunc) http.HandlerFunc {
 type APIServer struct {
 	listenAddr string
 	router     *mux.Router
+	storage    Storage
 }
 
-func newAPIServer(listenAddr string) *APIServer {
+func newAPIServer(listenAddr string, store Storage) *APIServer {
 	return &APIServer{
 		listenAddr: listenAddr,
 		router:     mux.NewRouter(),
+		storage:    store,
 	}
 }
 
