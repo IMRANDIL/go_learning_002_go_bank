@@ -34,11 +34,42 @@ func newPostgesStore() (*PostgresStore, error) {
 	}, nil
 }
 
+func (s *PostgresStore) Init() error {
+	err := s.createAccountTable()
+	if err != nil {
+		return err
+	}
+
+	// You can add more initialization steps here
+
+	return nil
+}
+
+func (s *PostgresStore) createAccountTable() error {
+	query := `
+        CREATE TABLE IF NOT EXISTS accounts (
+            id SERIAL PRIMARY KEY,
+            first_name VARCHAR(255) NOT NULL,
+            last_name VARCHAR(255) NOT NULL,
+            hobby VARCHAR(255),
+            age INT,
+            account_number BIGINT NOT NULL,
+            balance DECIMAL(15, 2) NOT NULL
+        )
+    `
+
+	_, err := s.db.Exec(query)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (s *PostgresStore) createAccount(*Account) error {
 	return nil
 }
 
-func (s *PostgresStore) deleteAccount(int) error {
+func (s *PostgresStore) deleteAccount(id int) error {
 	return nil
 }
 
@@ -46,6 +77,6 @@ func (s *PostgresStore) updateAccount(*Account) error {
 	return nil
 }
 
-func (s *PostgresStore) getAccountById(int) error {
-	return nil
+func (s *PostgresStore) getAccountById(id int) (*Account, error) {
+	return nil, nil
 }

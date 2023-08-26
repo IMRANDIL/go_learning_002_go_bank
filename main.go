@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 )
 
@@ -11,7 +10,7 @@ func main() {
 		log.Fatal(err)
 	}
 
-	fmt.Printf("%+v\n", store)
-	// server := newAPIServer(":8080", store) // Adjust the address as needed
-	// server.run()
+	// fmt.Printf("%+v\n", store)
+	server := newAPIServer(":8080", store) // Adjust the address as needed
+	server.run()
 }
