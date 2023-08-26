@@ -56,8 +56,16 @@ func (s *APIServer) run() {
 }
 
 func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error {
+	accountDetails := Account{
+		ID:         1,
+		FIRST_NAME: "ALI",
+		LAST_NAME:  "IMRAN",
+		HOBBY:      "CODING",
+		AGE:        26,
+	}
 
-	_, err := fmt.Fprintf(w, "Hi ali")
+	err := writeJSON(w, 200, accountDetails)
+
 	return err
 }
 
