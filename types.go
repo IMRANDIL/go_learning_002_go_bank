@@ -2,6 +2,13 @@ package main
 
 import "math/rand"
 
+type createAccountRequest struct {
+	FIRST_NAME string `json:"firstName"`
+	LAST_NAME  string `json:"lastName"`
+	HOBBY      string `json:"hobby"`
+	AGE        int    `json:"age"`
+}
+
 type Account struct {
 	ID         int    `json:"id"`
 	FIRST_NAME string `json:"firstName"`

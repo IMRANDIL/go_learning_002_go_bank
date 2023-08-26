@@ -54,7 +54,9 @@ func (s *PostgresStore) createAccountTable() error {
             hobby VARCHAR(255),
             age INT,
             account_number BIGINT NOT NULL,
-            balance DECIMAL(15, 2) NOT NULL
+            balance DECIMAL(15, 2) NOT NULL,
+			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     `
 
