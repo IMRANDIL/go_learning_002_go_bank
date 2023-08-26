@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	_ "github.com/lib/pq"
@@ -62,12 +63,45 @@ func (s *PostgresStore) createAccountTable() error {
 
 	_, err := s.db.Exec(query)
 	if err != nil {
+		log.Printf("Error inserting account: %v", err)
 		return err
 	}
 	return nil
 }
 
-func (s *PostgresStore) createAccount(*Account) error {
+func (s *PostgresStore) createAccount(account *Account) error {
+	log.Printf("hitting the createAccount storage: %v", account)
+	query := `
+        INSERT INTO accounts (first_name, last_name, hobby, age, account_number, balance)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id, first_name, last_name, hobby, age, account_number, balance
+    `
+
+	err := s.db.QueryRow(
+		query,
+		account.FIRST_NAME,
+		account.LAST_NAME,
+		account.HOBBY,
+		account.AGE,
+		account.ACCOUNT,
+		account.BALANCE,
+	).Scan(
+		&account.ID,
+		&account.FIRST_NAME,
+		&account.LAST_NAME,
+		&account.HOBBY,
+		&account.AGE,
+		&account.ACCOUNT,
+		&account.BALANCE,
+	)
+
+	if err != nil {
+		log.Printf("Error inserting account: %v", err)
+		return err
+	}
+
+	fmt.Printf("%+v", account)
+
 	return nil
 }
 

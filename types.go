@@ -1,6 +1,9 @@
 package main
 
-import "math/rand"
+import (
+	"math/rand"
+	"strconv"
+)
 
 type createAccountRequest struct {
 	FIRST_NAME string `json:"firstName"`
@@ -16,17 +19,17 @@ type Account struct {
 	HOBBY      string `json:"hobby"`
 	AGE        int    `json:"age"`
 	ACCOUNT    int64  `json:"account"`
-	BALANCE    int64  `json:"balance"`
+	BALANCE    string `json:"balance"`
 }
 
-func newAccount(firstName, lastName, hobby string, age, balance int) *Account {
+func newAccount(firstName, lastName, hobby string, age int) *Account {
 	return &Account{
-		ID:         rand.Intn(10000),
+		//ID:         rand.Intn(10000),
 		FIRST_NAME: firstName,
 		LAST_NAME:  lastName,
 		HOBBY:      hobby,
 		ACCOUNT:    int64(rand.Intn(100000000)),
-		BALANCE:    int64(balance),
+		BALANCE:    strconv.Itoa(rand.Intn(1000000000)), // Convert int to string
 		AGE:        age,
 	}
 }
