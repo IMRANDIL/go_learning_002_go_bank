@@ -1,6 +1,17 @@
 package main
 
+import (
+	"fmt"
+	"log"
+)
+
 func main() {
-	server := newAPIServer(":8080") // Adjust the address as needed
-	server.run()
+	store, err := newPostgesStore()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Printf("%+v\n", store)
+	// server := newAPIServer(":8080", store) // Adjust the address as needed
+	// server.run()
 }
