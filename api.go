@@ -66,7 +66,7 @@ func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error 
 		BALANCE:    500000000000,
 	}
 
-	err := writeJSON(w, 200, accountDetails)
+	err := writeJSON(w, http.StatusOK, accountDetails)
 
 	return err
 }
@@ -74,7 +74,7 @@ func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error 
 func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) error {
 	account := newAccount("Imran", "Adil", "Cricket", 26, 30000)
 
-	err := writeJSON(w, 200, account)
+	err := writeJSON(w, http.StatusOK, account)
 	return err
 }
 
