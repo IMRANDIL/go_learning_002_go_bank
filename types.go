@@ -1,5 +1,7 @@
 package main
 
+import "math/rand"
+
 type Account struct {
 	ID         int
 	FIRST_NAME string
@@ -10,13 +12,14 @@ type Account struct {
 	BALANCE    int64
 }
 
-func newAccount(firstName, lastName, hobby string, account, balance int) *Account {
+func newAccount(firstName, lastName, hobby string, age, balance int) *Account {
 	return &Account{
-		ID:         2,
+		ID:         rand.Intn(10000),
 		FIRST_NAME: firstName,
 		LAST_NAME:  lastName,
 		HOBBY:      hobby,
-		ACCOUNT:    int64(account),
+		ACCOUNT:    int64(rand.Intn(100000000)),
 		BALANCE:    int64(balance),
+		AGE:        age,
 	}
 }
