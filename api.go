@@ -62,6 +62,8 @@ func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error 
 		LAST_NAME:  "IMRAN",
 		HOBBY:      "CODING",
 		AGE:        26,
+		ACCOUNT:    212233222222,
+		BALANCE:    500000000000,
 	}
 
 	err := writeJSON(w, 200, accountDetails)
