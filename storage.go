@@ -15,6 +15,7 @@ type Storage interface {
 	getAccountById(int) (*Account, error)
 	allAccounts() ([]*Account, error)
 	transferBalance(int64, int64, float64) error
+	getUserByUsername(string) (*User, error)
 }
 
 type PostgresStore struct {
@@ -45,6 +46,11 @@ func (s *PostgresStore) Init() error {
 
 	// You can add more initialization steps here
 
+	err = s.createUserTable()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -66,6 +72,25 @@ func (s *PostgresStore) createAccountTable() error {
 	_, err := s.db.Exec(query)
 	if err != nil {
 		log.Printf("Error inserting account: %v", err)
+		return err
+	}
+	return nil
+}
+
+func (s *PostgresStore) createUserTable() error {
+	query := `
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username VARCHAR(255) NOT NULL,
+            password VARCHAR(255) NOT NULL,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+			updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    `
+
+	_, err := s.db.Exec(query)
+	if err != nil {
+		log.Printf("Error creating users table: %v", err)
 		return err
 	}
 	return nil
@@ -331,4 +356,31 @@ func (s *PostgresStore) transferBalance(fromAccountNumber, toAccountNumber int64
 	}
 
 	return nil
+}
+
+func (s *PostgresStore) getUserByUsername(username string) (*User, error) {
+	query := `
+		SELECT *
+		FROM users
+		WHERE username = $1;
+	`
+
+	user := &User{}
+
+	err := s.db.QueryRow(query, username).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Password,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil // Return nil if user not found
+		}
+		log.Printf("Error fetching user by username: %v", err)
+		return nil, err
+	}
+
+	return user, nil
 }
