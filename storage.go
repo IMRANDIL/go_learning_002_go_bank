@@ -177,7 +177,31 @@ func (s *PostgresStore) deleteAccount(id int) error {
 	return nil
 }
 
-func (s *PostgresStore) updateAccount(*Account) error {
+func (s *PostgresStore) updateAccount(updatedAccount *Account) error {
+	query := `
+        UPDATE accounts
+        SET first_name = $1,
+            last_name = $2,
+            hobby = $3,
+            age = $4,
+            balance = $5,
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = $6;
+    `
+
+	_, err := s.db.Exec(query,
+		updatedAccount.FIRST_NAME,
+		updatedAccount.LAST_NAME,
+		updatedAccount.HOBBY,
+		updatedAccount.AGE,
+		updatedAccount.BALANCE,
+		updatedAccount.ID,
+	)
+	if err != nil {
+		log.Printf("Error updating account: %v", err)
+		return err
+	}
+
 	return nil
 }
 

@@ -58,6 +58,7 @@ func (s *APIServer) setupRoutes() {
 	s.router.HandleFunc("/accounts", s.makeHTTPHandleFunc(s.handleCreateAccount)).Methods("POST")
 	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleDeleteAccount)).Methods("DELETE")
 	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleAccountById)).Methods("GET")
+	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleUpdateAccount)).Methods("PATCH")
 	s.router.HandleFunc("/accounts/transfer", s.makeHTTPHandleFunc(s.handleAccountTransfer)).Methods("POST")
 }
 
@@ -173,4 +174,56 @@ func (s *APIServer) handleAccountById(w http.ResponseWriter, r *http.Request) er
 	}
 
 	return writeJSON(w, http.StatusOK, account)
+}
+
+func (s *APIServer) handleUpdateAccount(w http.ResponseWriter, r *http.Request) error {
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		writeAPIError(w, http.StatusBadRequest, "Invalid account ID")
+		return nil
+	}
+
+	// Call the storage method to get the existing account by ID
+	existingAccount, err := s.storage.getAccountById(id)
+	if err != nil {
+		if err.Error() == "account not found" {
+			writeAPIError(w, http.StatusNotFound, "Account not found")
+			return nil
+		}
+		writeAPIError(w, http.StatusInternalServerError, "Internal server error")
+		return nil
+	}
+
+	// Decode the updated account details from the request body
+	updatedAccount := &Account{}
+	if err := json.NewDecoder(r.Body).Decode(updatedAccount); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "Invalid request data")
+		return nil
+	}
+
+	// Update the existing account with the new data if provided
+	if updatedAccount.FIRST_NAME != "" {
+		existingAccount.FIRST_NAME = updatedAccount.FIRST_NAME
+	}
+	if updatedAccount.LAST_NAME != "" {
+		existingAccount.LAST_NAME = updatedAccount.LAST_NAME
+	}
+	if updatedAccount.HOBBY != "" {
+		existingAccount.HOBBY = updatedAccount.HOBBY
+	}
+	if updatedAccount.AGE != 0 {
+		existingAccount.AGE = updatedAccount.AGE
+	}
+
+	// Call the storage method to update the account
+	err = s.storage.updateAccount(existingAccount)
+	if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "Internal server error")
+		return nil
+	}
+
+	// Respond with success status
+	return writeJSON(w, http.StatusOK, existingAccount)
 }
