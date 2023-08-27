@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"fmt"
 	"log"
 
 	_ "github.com/lib/pq"
@@ -99,8 +98,6 @@ func (s *PostgresStore) createAccount(account *Account) error {
 		log.Printf("Error inserting account: %v", err)
 		return err
 	}
-
-	fmt.Printf("%+v", account)
 
 	return nil
 }

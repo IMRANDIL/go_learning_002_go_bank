@@ -2,7 +2,6 @@ package main
 
 import (
 	"math/rand"
-	"strconv"
 )
 
 type createAccountRequest struct {
@@ -29,7 +28,7 @@ func newAccount(firstName, lastName, hobby string, age int) *Account {
 		LAST_NAME:  lastName,
 		HOBBY:      hobby,
 		ACCOUNT:    int64(rand.Intn(100000000)),
-		BALANCE:    strconv.Itoa(rand.Intn(1000000000)), // Convert int to string
-		AGE:        age,
+		// BALANCE:    strconv.Itoa(rand.Intn(1000000000)), // Convert int to string
+		AGE: age,
 	}
 }
