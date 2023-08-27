@@ -287,8 +287,44 @@ func (s *APIServer) handleAccountTransfer(w http.ResponseWriter, r *http.Request
 		return nil
 	}
 
+	// Parse and validate the JWT token from the request header
+	tokenString := r.Header.Get("Authorization")
+	if !strings.HasPrefix(tokenString, "Bearer ") {
+		return writeAPIError(w, http.StatusUnauthorized, "Invalid authorization header")
+	}
+	tokenString = strings.TrimPrefix(tokenString, "Bearer ")
+
+	// TODO: Replace with your actual JWT secret
+	secret := []byte(os.Getenv("JWT_SECRET"))
+
+	// Parse the JWT token
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		return secret, nil
+	})
+	if err != nil {
+		return writeAPIError(w, http.StatusUnauthorized, "Invalid token")
+	}
+
+	// Check if the token is valid
+	if !token.Valid {
+		return writeAPIError(w, http.StatusUnauthorized, "Invalid token")
+	}
+
+	// Extract the claims from the token
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return writeAPIError(w, http.StatusUnauthorized, "Invalid token claims")
+	}
+
+	// Extract the user ID from the claims
+	userIDFloat, ok := claims["user_id"].(float64)
+	if !ok {
+		return writeAPIError(w, http.StatusUnauthorized, "Invalid user ID in token")
+	}
+	userID := int(userIDFloat)
+	fmt.Println(userID)
 	// Call the storage method to perform the balance transfer
-	err := s.storage.transferBalance(transferReq.FromAccountID, transferReq.ToAccountID, transferReq.Amount)
+	err = s.storage.transferBalance(transferReq.FromAccountID, transferReq.ToAccountID, transferReq.Amount)
 	if err != nil {
 		// Handle different error scenarios
 		if err.Error() == "insufficient balance in the 'from' account" {

@@ -42,13 +42,14 @@ Content-Type: application/json
 
 ###
 
-POST  http://localhost:8080/accounts/transfer
+POST http://localhost:8080/accounts/transfer
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTMyMjQ1NjIsInVzZXJfaWQiOjV9.TwmzNAJU0kUPxM9nwGnNCQLtwPkV-X466i4EFqOG-O0
 Content-Type: application/json
 
-{ 
+{
    "from_account_id": 4192355307,
    "to_account_id": 193807991,
-   "amount": 9000 
+   "amount": 9000
 }
 
 
