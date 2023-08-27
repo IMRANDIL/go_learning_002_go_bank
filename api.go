@@ -119,8 +119,31 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 }
 
 func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) error {
+	// Extract the account ID from the request URL
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		writeAPIError(w, http.StatusBadRequest, "Invalid account ID")
+		return nil
+	}
 
-	return nil
+	// Call the storage method to delete the account by ID
+	err = s.storage.deleteAccount(id)
+	if err != nil {
+		// Check if the error is "account not found"
+		if err.Error() == "account not found" {
+			writeAPIError(w, http.StatusNotFound, "Account not found")
+			return nil
+		}
+
+		// Handle other errors
+		writeAPIError(w, http.StatusInternalServerError, "Internal server error")
+		return nil
+	}
+
+	// Respond with success status
+	return writeJSON(w, http.StatusOK, map[string]string{"message": "Account deleted successfully"})
 }
 
 func (s *APIServer) handleAccountTransfer(w http.ResponseWriter, r *http.Request) error {

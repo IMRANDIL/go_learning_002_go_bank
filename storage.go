@@ -145,6 +145,35 @@ func (s *PostgresStore) allAccounts() ([]*Account, error) {
 }
 
 func (s *PostgresStore) deleteAccount(id int) error {
+	// Check if the account exists
+	existsQuery := `
+		SELECT id
+		FROM accounts
+		WHERE id = $1;
+	`
+
+	var accountID int
+	err := s.db.QueryRow(existsQuery, id).Scan(&accountID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("account not found")
+		}
+		log.Printf("Error checking account existence: %v", err)
+		return err
+	}
+
+	// Account exists, so proceed with deletion
+	deleteQuery := `
+		DELETE FROM accounts
+		WHERE id = $1;
+	`
+
+	_, err = s.db.Exec(deleteQuery, id)
+	if err != nil {
+		log.Printf("Error deleting account: %v", err)
+		return err
+	}
+
 	return nil
 }
 
