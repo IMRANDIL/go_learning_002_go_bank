@@ -9,6 +9,11 @@ import (
 	"github.com/gorilla/mux"
 )
 
+type APIError struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+}
+
 func writeJSON(w http.ResponseWriter, status int, v any) error {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -26,6 +31,11 @@ func (s *APIServer) makeHTTPHandleFunc(f apiFunc) http.HandlerFunc {
 			// log.Printf("Error: %v", err)
 		}
 	}
+}
+
+func writeAPIError(w http.ResponseWriter, status int, message string) {
+	writeJSON(w, status, &APIError{Status: status, Message: message})
+
 }
 
 type APIServer struct {
@@ -124,15 +134,20 @@ func (s *APIServer) handleAccountById(w http.ResponseWriter, r *http.Request) er
 	idStr := vars["id"]
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		return fmt.Errorf("invalid account ID")
+		writeAPIError(w, http.StatusBadRequest, "Invalid account ID")
+		return nil
 	}
 
 	// Call the storage method to get the account by ID
 	account, err := s.storage.getAccountById(id)
 	if err != nil {
-		return err
+		if err.Error() == "account not found" {
+			writeAPIError(w, http.StatusNotFound, "Account not found")
+			return nil
+		}
+		writeAPIError(w, http.StatusInternalServerError, "Internal server error")
+		return nil
 	}
 
-	// Write the account details as a JSON response
 	return writeJSON(w, http.StatusOK, account)
 }
