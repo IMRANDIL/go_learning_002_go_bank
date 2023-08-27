@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"fmt"
 	"log"
 
 	_ "github.com/lib/pq"
@@ -152,5 +153,32 @@ func (s *PostgresStore) updateAccount(*Account) error {
 }
 
 func (s *PostgresStore) getAccountById(id int) (*Account, error) {
-	return nil, nil
+	query := `
+		SELECT *
+		FROM accounts
+		WHERE id = $1;
+	`
+
+	account := &Account{}
+
+	err := s.db.QueryRow(query, id).Scan(
+		&account.ID,
+		&account.FIRST_NAME,
+		&account.LAST_NAME,
+		&account.HOBBY,
+		&account.AGE,
+		&account.ACCOUNT,
+		&account.BALANCE,
+		&account.CREATED_AT,
+		&account.UPDATED_AT,
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("account not found")
+		}
+		log.Printf("Error fetching account by ID: %v", err)
+		return nil, err
+	}
+
+	return account, nil
 }

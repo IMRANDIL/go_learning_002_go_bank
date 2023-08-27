@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
@@ -46,6 +47,7 @@ func (s *APIServer) setupRoutes() {
 	s.router.HandleFunc("/accounts", s.makeHTTPHandleFunc(s.handleAllAccounts)).Methods("GET")
 	s.router.HandleFunc("/accounts", s.makeHTTPHandleFunc(s.handleCreateAccount)).Methods("POST")
 	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleDeleteAccount)).Methods("DELETE")
+	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleAccountById)).Methods("GET")
 	s.router.HandleFunc("/accounts/transfer", s.makeHTTPHandleFunc(s.handleAccountTransfer)).Methods("POST")
 }
 
@@ -114,4 +116,23 @@ func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) 
 func (s *APIServer) handleAccountTransfer(w http.ResponseWriter, r *http.Request) error {
 
 	return nil
+}
+
+func (s *APIServer) handleAccountById(w http.ResponseWriter, r *http.Request) error {
+	// Extract the account ID from the request URL
+	vars := mux.Vars(r)
+	idStr := vars["id"]
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		return fmt.Errorf("invalid account ID")
+	}
+
+	// Call the storage method to get the account by ID
+	account, err := s.storage.getAccountById(id)
+	if err != nil {
+		return err
+	}
+
+	// Write the account details as a JSON response
+	return writeJSON(w, http.StatusOK, account)
 }
