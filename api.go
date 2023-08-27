@@ -102,6 +102,7 @@ func newAPIServer(listenAddr string, store Storage) *APIServer {
 
 func (s *APIServer) setupRoutes() {
 	//s.router.HandleFunc("/", s.makeHTTPHandleFunc(s.handleAccount)).Methods("GET")
+	s.router.HandleFunc("/users", s.makeHTTPHandleFunc(s.handleSignup)).Methods("POST")
 	s.router.HandleFunc("/accounts", s.makeHTTPHandleFunc(s.handleAllAccounts)).Methods("GET")
 	s.router.HandleFunc("/accounts", s.makeHTTPHandleFunc(s.handleCreateAccount)).Methods("POST")
 	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleDeleteAccount)).Methods("DELETE")

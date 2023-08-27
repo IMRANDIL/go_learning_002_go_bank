@@ -16,6 +16,7 @@ type Storage interface {
 	allAccounts() ([]*Account, error)
 	transferBalance(int64, int64, float64) error
 	getUserByUsername(string) (*User, error)
+	createUser(*User) error
 }
 
 type PostgresStore struct {
@@ -383,4 +384,28 @@ func (s *PostgresStore) getUserByUsername(username string) (*User, error) {
 	}
 
 	return user, nil
+}
+
+func (s *PostgresStore) createUser(user *User) error {
+	query := `
+		INSERT INTO users (username, password)
+		VALUES ($1, $2)
+		RETURNING id, created_at, updated_at;
+	`
+
+	err := s.db.QueryRow(
+		query,
+		user.Username,
+		user.Password,
+	).Scan(
+		&user.ID,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
+	if err != nil {
+		log.Printf("Error inserting user: %v", err)
+		return err
+	}
+
+	return nil
 }

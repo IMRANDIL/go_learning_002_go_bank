@@ -50,3 +50,16 @@ Content-Type: application/json
    "to_account_id": 193807991,
    "amount": 9000 
 }
+
+
+
+###
+
+POST  http://localhost:8080/users
+Content-Type: application/json
+
+{ 
+   "username": "aliimranadil2@gmail.com",
+   "password": "Dil@2580123"
+   
+}

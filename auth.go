@@ -22,17 +22,7 @@ type User struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-type AuthServer struct {
-	store Storage
-}
-
-func newAuthServer(store Storage) *AuthServer {
-	return &AuthServer{
-		store: store,
-	}
-}
-
-func (as *AuthServer) handleSignup(w http.ResponseWriter, r *http.Request) error {
+func (s *APIServer) handleSignup(w http.ResponseWriter, r *http.Request) error {
 	signupRequest := new(SignupRequest)
 	if err := json.NewDecoder(r.Body).Decode(signupRequest); err != nil {
 		return err
@@ -44,7 +34,7 @@ func (as *AuthServer) handleSignup(w http.ResponseWriter, r *http.Request) error
 	}
 
 	// Check if the username already exists
-	existingUser, err := as.store.getUserByUsername(signupRequest.Username)
+	existingUser, err := s.storage.getUserByUsername(signupRequest.Username)
 	if err != nil {
 		return err
 	}
@@ -61,7 +51,7 @@ func (as *AuthServer) handleSignup(w http.ResponseWriter, r *http.Request) error
 		Username: signupRequest.Username,
 		Password: hashedPassword,
 	}
-	err = as.store.createUser(user)
+	err = s.storage.createUser(user)
 	if err != nil {
 		return err
 	}
