@@ -2,11 +2,11 @@ POST http://localhost:8080/accounts
 Content-Type: application/json
 
 {
-    "firstName": "Lovely thakur",
+    "firstName": "Rohit",
     "lastName": "sharma",
     "hobby": "Playing Cricket",
-    "age":25,
-    "balance": "1512"
+    "age":25
+    
 }
 
 
@@ -26,16 +26,16 @@ Content-Type: application/json
 
 ###
 
-DELETE  http://localhost:8080/accounts/8
+DELETE  http://localhost:8080/accounts/7
 Content-Type: application/json
 
 ###
 
-PATCH  http://localhost:8080/accounts/5
+PATCH  http://localhost:8080/accounts/15
 Content-Type: application/json
 
 { 
-    "age":45
+    "balance": 31000
 }
 
 

@@ -218,6 +218,10 @@ func (s *APIServer) handleUpdateAccount(w http.ResponseWriter, r *http.Request) 
 		existingAccount.AGE = updatedAccount.AGE
 	}
 
+	if updatedAccount.BALANCE != 0 {
+		existingAccount.BALANCE = updatedAccount.BALANCE
+	}
+
 	// Call the storage method to update the account
 	err = s.storage.updateAccount(existingAccount)
 	if err != nil {
