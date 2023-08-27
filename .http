@@ -48,5 +48,5 @@ Content-Type: application/json
 { 
    "from_account_id": 4192355307,
    "to_account_id": 193807991,
-   "amount": 1000 
+   "amount": 4000 
 }
