@@ -55,7 +55,19 @@ Content-Type: application/json
 
 ###
 
-POST  http://localhost:8080/users
+POST  http://localhost:8080/users/signup
+Content-Type: application/json
+
+{ 
+   "username": "aliimranadil2@gmail.com",
+   "password": "Dil@2580123"
+   
+}
+
+
+###
+
+POST  http://localhost:8080/users/login
 Content-Type: application/json
 
 { 

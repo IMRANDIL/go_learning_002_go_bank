@@ -81,8 +81,8 @@ func (s *APIServer) makeHTTPHandleFunc(f apiFunc) http.HandlerFunc {
 	}
 }
 
-func writeAPIError(w http.ResponseWriter, status int, message string) {
-	writeJSON(w, status, &APIError{Status: status, Message: message})
+func writeAPIError(w http.ResponseWriter, status int, message string) error {
+	return writeJSON(w, status, &APIError{Status: status, Message: message})
 
 }
 
@@ -102,7 +102,8 @@ func newAPIServer(listenAddr string, store Storage) *APIServer {
 
 func (s *APIServer) setupRoutes() {
 	//s.router.HandleFunc("/", s.makeHTTPHandleFunc(s.handleAccount)).Methods("GET")
-	s.router.HandleFunc("/users", s.makeHTTPHandleFunc(s.handleSignup)).Methods("POST")
+	s.router.HandleFunc("/users/signup", s.makeHTTPHandleFunc(s.handleSignup)).Methods("POST")
+	s.router.HandleFunc("/users/login", s.makeHTTPHandleFunc(s.handleLogin)).Methods("POST")
 	s.router.HandleFunc("/accounts", s.makeHTTPHandleFunc(s.handleAllAccounts)).Methods("GET")
 	s.router.HandleFunc("/accounts", s.makeHTTPHandleFunc(s.handleCreateAccount)).Methods("POST")
 	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleDeleteAccount)).Methods("DELETE")

@@ -6,6 +6,7 @@ import (
 	"log"
 
 	_ "github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type Storage interface {
@@ -17,6 +18,7 @@ type Storage interface {
 	transferBalance(int64, int64, float64) error
 	getUserByUsername(string) (*User, error)
 	createUser(*User) error
+	authenticateUser(string, string) (*User, error)
 }
 
 type PostgresStore struct {
@@ -377,7 +379,7 @@ func (s *PostgresStore) getUserByUsername(username string) (*User, error) {
 	)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return nil, nil // Return nil if user not found
+			return nil, nil // Return nil and no error if user not found
 		}
 		log.Printf("Error fetching user by username: %v", err)
 		return nil, err
@@ -408,4 +410,23 @@ func (s *PostgresStore) createUser(user *User) error {
 	}
 
 	return nil
+}
+
+func (s *PostgresStore) authenticateUser(username, password string) (*User, error) {
+	user, err := s.getUserByUsername(username)
+	if err != nil {
+		return nil, err
+	}
+	if user == nil {
+		return nil, nil // User not found
+	}
+
+	// Compare the hashed password with the provided password
+	err = bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(password))
+	if err != nil {
+		// Return a custom error message here
+		return nil, fmt.Errorf("invalid password") //password don't match
+	}
+
+	return user, nil
 }
