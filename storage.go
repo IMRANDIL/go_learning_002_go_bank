@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 
 	_ "github.com/lib/pq"
 	"golang.org/x/crypto/bcrypt"
@@ -27,7 +28,9 @@ type PostgresStore struct {
 }
 
 func newPostgesStore() (*PostgresStore, error) {
-	connStr := "user=postgres dbname=goLearning_db password=Dil@2580123 sslmode=disable"
+
+	password := os.Getenv("PASSWORD")
+	connStr := fmt.Sprintf("user=postgres dbname=goLearning_db password=%s sslmode=disable", password)
 
 	db, err := sql.Open("postgres", connStr)
 	if err != nil {
