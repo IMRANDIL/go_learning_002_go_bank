@@ -13,21 +13,23 @@ type createAccountRequest struct {
 	HOBBY      string  `json:"hobby"`
 	AGE        int     `json:"age"`
 	BALANCE    float64 `json:"balance"`
+	UserID     int     `json:"user_id"`
 }
 
 type Account struct {
-	ID         int     `json:"id"`
-	FIRST_NAME string  `json:"firstName"`
-	LAST_NAME  string  `json:"lastName"`
-	HOBBY      string  `json:"hobby"`
-	AGE        int     `json:"age"`
-	ACCOUNT    int64   `json:"account"`
-	BALANCE    float64 `json:"balance"`
-	CREATED_AT string  `json:"created_at"`
-	UPDATED_AT string  `json:"updated_at"`
+	ID         int       `json:"id"`
+	UserID     int       `json:"user_id"`
+	FIRST_NAME string    `json:"firstName"`
+	LAST_NAME  string    `json:"lastName"`
+	HOBBY      string    `json:"hobby"`
+	AGE        int       `json:"age"`
+	ACCOUNT    int64     `json:"account"`
+	BALANCE    float64   `json:"balance"`
+	CREATED_AT time.Time `json:"created_at"`
+	UPDATED_AT time.Time `json:"updated_at"`
 }
 
-func newAccount(firstName, lastName, hobby string, age int, balance float64) *Account {
+func newAccount(firstName, lastName, hobby string, age int, balance float64, userId int) *Account {
 	return &Account{
 		//ID:         rand.Intn(10000),
 		FIRST_NAME: firstName,
@@ -36,6 +38,7 @@ func newAccount(firstName, lastName, hobby string, age int, balance float64) *Ac
 		ACCOUNT:    generateUniqueAccountNumber(),
 		AGE:        age,
 		BALANCE:    balance,
+		UserID:     userId,
 	}
 }
 

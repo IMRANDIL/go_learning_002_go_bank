@@ -2,6 +2,7 @@ package main
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"log"
 
@@ -61,6 +62,7 @@ func (s *PostgresStore) createAccountTable() error {
 	query := `
         CREATE TABLE IF NOT EXISTS accounts (
             id SERIAL PRIMARY KEY,
+            user_id INT NOT NULL,
             first_name VARCHAR(255) NOT NULL,
             last_name VARCHAR(255) NOT NULL,
             hobby VARCHAR(255),
@@ -68,7 +70,8 @@ func (s *PostgresStore) createAccountTable() error {
             account_number BIGINT NOT NULL,
             balance DECIMAL(15, 2) NOT NULL,
 			created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     `
 
@@ -100,15 +103,30 @@ func (s *PostgresStore) createUserTable() error {
 }
 
 func (s *PostgresStore) createAccount(account *Account) error {
-
+	// Check if an account with the same user ID already exists
 	query := `
-        INSERT INTO accounts (first_name, last_name, hobby, age, account_number, balance)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, first_name, last_name, hobby, age, account_number, balance, created_at, updated_at
+        SELECT COUNT(*) FROM accounts WHERE user_id = $1
+    `
+	var count int
+	err := s.db.QueryRow(query, account.UserID).Scan(&count)
+	if err != nil {
+		return err
+	}
+
+	if count > 0 {
+		return errors.New("user ID already exists")
+	}
+
+	// Proceed to insert the new account
+	insertQuery := `
+        INSERT INTO accounts (user_id, first_name, last_name, hobby, age, account_number, balance)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id, user_id, first_name, last_name, hobby, age, account_number, balance, created_at, updated_at
     `
 
-	err := s.db.QueryRow(
-		query,
+	err = s.db.QueryRow(
+		insertQuery,
+		account.UserID,
 		account.FIRST_NAME,
 		account.LAST_NAME,
 		account.HOBBY,
@@ -117,6 +135,7 @@ func (s *PostgresStore) createAccount(account *Account) error {
 		account.BALANCE,
 	).Scan(
 		&account.ID,
+		&account.UserID,
 		&account.FIRST_NAME,
 		&account.LAST_NAME,
 		&account.HOBBY,

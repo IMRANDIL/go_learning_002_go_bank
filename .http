@@ -1,11 +1,13 @@
 POST http://localhost:8080/accounts
 Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTMyMjg1NTYsInVzZXJfaWQiOjV9.-m8qrdEp67lQDl8-6Q4qS979hrjLnMWVnaaYcKdFK68
 
 {
-    "firstName": "Minhaj",
+    "firstName": "Ali Imran",
     "lastName": "Adil",
     "hobby": "Coding",
-    "age":25
+    "age":25,
+    "balance":95000
     
     
 }

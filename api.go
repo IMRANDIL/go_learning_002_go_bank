@@ -120,7 +120,7 @@ func (s *APIServer) setupRoutes() {
 	s.router.HandleFunc("/users/signup", s.makeHTTPHandleFunc(s.handleSignup)).Methods("POST")
 	s.router.HandleFunc("/users/login", s.makeHTTPHandleFunc(s.handleLogin)).Methods("POST")
 	s.router.HandleFunc("/accounts", s.makeHTTPHandleFunc(s.handleAllAccounts)).Methods("GET")
-	s.router.HandleFunc("/accounts", s.makeHTTPHandleFunc(s.handleCreateAccount)).Methods("POST")
+	s.router.HandleFunc("/accounts", withJWTAuth(s.makeHTTPHandleFunc(s.handleCreateAccount))).Methods("POST")
 	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleDeleteAccount)).Methods("DELETE")
 	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleAccountById)).Methods("GET")
 	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleUpdateAccount)).Methods("PATCH")
@@ -170,15 +170,25 @@ func (s *APIServer) handleAllAccounts(w http.ResponseWriter, r *http.Request) er
 
 func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) error {
 	createAccountReq := new(createAccountRequest)
-	//createAccountReq := createAccountRequest{}
 	if err := json.NewDecoder(r.Body).Decode(createAccountReq); err != nil {
-		return err
+		return writeAPIError(w, http.StatusBadRequest, "Invalid request data")
 	}
 
-	account := newAccount(createAccountReq.FIRST_NAME, createAccountReq.LAST_NAME, createAccountReq.HOBBY, createAccountReq.AGE, createAccountReq.BALANCE)
+	// Get the user ID from the request context
+	userID, ok := r.Context().Value("user_id").(int)
+	if !ok {
+		return writeAPIError(w, http.StatusUnauthorized, "Invalid user ID in request context")
+	}
 
+	account := newAccount(createAccountReq.FIRST_NAME, createAccountReq.LAST_NAME, createAccountReq.HOBBY, createAccountReq.AGE, createAccountReq.BALANCE, userID)
+
+	// Attempt to create the account
 	if err := s.storage.createAccount(account); err != nil {
-		return err
+		// Check the specific error to determine the error response
+		if strings.Contains(err.Error(), "user ID already exists") {
+			return writeAPIError(w, http.StatusConflict, "An account with the same user ID already exists")
+		}
+		return writeAPIError(w, http.StatusInternalServerError, "Internal server error")
 	}
 
 	return writeJSON(w, http.StatusCreated, account)
