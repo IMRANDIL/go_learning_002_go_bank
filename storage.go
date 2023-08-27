@@ -14,6 +14,7 @@ type Storage interface {
 	updateAccount(*Account) error
 	getAccountById(int) (*Account, error)
 	allAccounts() ([]*Account, error)
+	transferBalance(int, int, float64) error
 }
 
 type PostgresStore struct {
@@ -75,7 +76,7 @@ func (s *PostgresStore) createAccount(account *Account) error {
 	query := `
         INSERT INTO accounts (first_name, last_name, hobby, age, account_number, balance)
         VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id, first_name, last_name, hobby, age, account_number, balance
+        RETURNING id, first_name, last_name, hobby, age, account_number, balance, created_at, updated_at
     `
 
 	err := s.db.QueryRow(
@@ -94,6 +95,8 @@ func (s *PostgresStore) createAccount(account *Account) error {
 		&account.AGE,
 		&account.ACCOUNT,
 		&account.BALANCE,
+		&account.CREATED_AT,
+		&account.UPDATED_AT,
 	)
 
 	if err != nil {
@@ -234,4 +237,98 @@ func (s *PostgresStore) getAccountById(id int) (*Account, error) {
 	}
 
 	return account, nil
+}
+
+func (s *PostgresStore) transferBalance(fromAccountID, toAccountID int, amount float64) error {
+	// Begin a new database transaction
+	tx, err := s.db.Begin()
+	if err != nil {
+		log.Printf("Error starting transaction: %v", err)
+		return err
+	}
+	defer tx.Rollback() // Rollback the transaction if it's not committed
+
+	// Check if both accounts exist
+	existsQuery := `
+		SELECT id
+		FROM accounts
+		WHERE id IN ($1, $2);
+	`
+
+	var accountIDs []int
+	rows, err := tx.Query(existsQuery, fromAccountID, toAccountID)
+	if err != nil {
+		log.Printf("Error checking account existence: %v", err)
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var id int
+		if err := rows.Scan(&id); err != nil {
+			log.Printf("Error scanning row: %v", err)
+			return err
+		}
+		accountIDs = append(accountIDs, id)
+	}
+
+	if len(accountIDs) != 2 {
+		return fmt.Errorf("one or both accounts not found")
+	}
+
+	// Fetch the current balance of the 'from' account
+	fromAccountQuery := `
+		SELECT balance
+		FROM accounts
+		WHERE id = $1;
+	`
+
+	var fromBalance float64
+	err = tx.QueryRow(fromAccountQuery, fromAccountID).Scan(&fromBalance)
+	if err != nil {
+		log.Printf("Error fetching balance: %v", err)
+		return err
+	}
+
+	// Check if the 'from' account has enough balance
+	if fromBalance < amount {
+		return fmt.Errorf("insufficient balance in the 'from' account")
+	}
+
+	// Update the balance of the 'from' account
+	updateFromBalanceQuery := `
+		UPDATE accounts
+		SET balance = balance - $1,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = $2;
+	`
+
+	_, err = tx.Exec(updateFromBalanceQuery, amount, fromAccountID)
+	if err != nil {
+		log.Printf("Error updating 'from' account balance: %v", err)
+		return err
+	}
+
+	// Update the balance of the 'to' account
+	updateToBalanceQuery := `
+		UPDATE accounts
+		SET balance = balance + $1,
+			updated_at = CURRENT_TIMESTAMP
+		WHERE id = $2;
+	`
+
+	_, err = tx.Exec(updateToBalanceQuery, amount, toAccountID)
+	if err != nil {
+		log.Printf("Error updating 'to' account balance: %v", err)
+		return err
+	}
+
+	// Commit the transaction
+	err = tx.Commit()
+	if err != nil {
+		log.Printf("Error committing transaction: %v", err)
+		return err
+	}
+
+	return nil
 }

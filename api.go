@@ -14,6 +14,12 @@ type APIError struct {
 	Message string `json:"message"`
 }
 
+type transferRequest struct {
+	FromAccountID int     `json:"from_account_id"`
+	ToAccountID   int     `json:"to_account_id"`
+	Amount        float64 `json:"amount"`
+}
+
 func writeJSON(w http.ResponseWriter, status int, v any) error {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -53,7 +59,7 @@ func newAPIServer(listenAddr string, store Storage) *APIServer {
 }
 
 func (s *APIServer) setupRoutes() {
-	s.router.HandleFunc("/", s.makeHTTPHandleFunc(s.handleAccount)).Methods("GET")
+	//s.router.HandleFunc("/", s.makeHTTPHandleFunc(s.handleAccount)).Methods("GET")
 	s.router.HandleFunc("/accounts", s.makeHTTPHandleFunc(s.handleAllAccounts)).Methods("GET")
 	s.router.HandleFunc("/accounts", s.makeHTTPHandleFunc(s.handleCreateAccount)).Methods("POST")
 	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleDeleteAccount)).Methods("DELETE")
@@ -70,21 +76,21 @@ func (s *APIServer) run() {
 
 }
 
-func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error {
-	accountDetails := Account{
-		ID:         1,
-		FIRST_NAME: "ALI",
-		LAST_NAME:  "IMRAN",
-		HOBBY:      "CODING",
-		AGE:        26,
-		ACCOUNT:    212233222222,
-		BALANCE:    "50000000000",
-	}
+// func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error {
+// 	accountDetails := Account{
+// 		ID:         1,
+// 		FIRST_NAME: "ALI",
+// 		LAST_NAME:  "IMRAN",
+// 		HOBBY:      "CODING",
+// 		AGE:        26,
+// 		ACCOUNT:    212233222222,
+// 		BALANCE:    "50000000000",
+// 	}
 
-	err := writeJSON(w, http.StatusOK, accountDetails)
+// 	err := writeJSON(w, http.StatusOK, accountDetails)
 
-	return err
-}
+// 	return err
+// }
 
 func (s *APIServer) handleAllAccounts(w http.ResponseWriter, r *http.Request) error {
 	accounts, err := s.storage.allAccounts()
@@ -110,7 +116,7 @@ func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) 
 		return err
 	}
 
-	account := newAccount(createAccountReq.FIRST_NAME, createAccountReq.LAST_NAME, createAccountReq.HOBBY, createAccountReq.AGE)
+	account := newAccount(createAccountReq.FIRST_NAME, createAccountReq.LAST_NAME, createAccountReq.HOBBY, createAccountReq.AGE, createAccountReq.BALANCE)
 
 	if err := s.storage.createAccount(account); err != nil {
 		return err
@@ -145,11 +151,6 @@ func (s *APIServer) handleDeleteAccount(w http.ResponseWriter, r *http.Request) 
 
 	// Respond with success status
 	return writeJSON(w, http.StatusOK, map[string]string{"message": "Account deleted successfully"})
-}
-
-func (s *APIServer) handleAccountTransfer(w http.ResponseWriter, r *http.Request) error {
-
-	return nil
 }
 
 func (s *APIServer) handleAccountById(w http.ResponseWriter, r *http.Request) error {
@@ -226,4 +227,34 @@ func (s *APIServer) handleUpdateAccount(w http.ResponseWriter, r *http.Request) 
 
 	// Respond with success status
 	return writeJSON(w, http.StatusOK, existingAccount)
+}
+
+func (s *APIServer) handleAccountTransfer(w http.ResponseWriter, r *http.Request) error {
+	// Decode the transfer request details from the request body
+
+	var transferReq transferRequest
+
+	if err := json.NewDecoder(r.Body).Decode(&transferReq); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "Invalid request data")
+		return nil
+	}
+
+	// Call the storage method to perform the balance transfer
+	err := s.storage.transferBalance(transferReq.FromAccountID, transferReq.ToAccountID, transferReq.Amount)
+	if err != nil {
+		// Handle different error scenarios
+		if err.Error() == "insufficient balance in the 'from' account" {
+			writeAPIError(w, http.StatusBadRequest, "Insufficient balance in the 'from' account")
+			return nil
+		}
+		if err.Error() == "one or both accounts not found" {
+			writeAPIError(w, http.StatusNotFound, "One or both accounts not found")
+			return nil
+		}
+		writeAPIError(w, http.StatusInternalServerError, "Internal server error")
+		return nil
+	}
+
+	// Respond with success status
+	return writeJSON(w, http.StatusOK, map[string]string{"message": "Balance transferred successfully"})
 }

@@ -9,6 +9,7 @@ type createAccountRequest struct {
 	LAST_NAME  string `json:"lastName"`
 	HOBBY      string `json:"hobby"`
 	AGE        int    `json:"age"`
+	BALANCE    string `json:"balance"`
 }
 
 type Account struct {
@@ -23,14 +24,14 @@ type Account struct {
 	UPDATED_AT string `json:"updated_at"`
 }
 
-func newAccount(firstName, lastName, hobby string, age int) *Account {
+func newAccount(firstName, lastName, hobby string, age int, balance string) *Account {
 	return &Account{
 		//ID:         rand.Intn(10000),
 		FIRST_NAME: firstName,
 		LAST_NAME:  lastName,
 		HOBBY:      hobby,
 		ACCOUNT:    int64(rand.Intn(100000000)),
-		BALANCE:    "0",
 		AGE:        age,
+		BALANCE:    balance,
 	}
 }
