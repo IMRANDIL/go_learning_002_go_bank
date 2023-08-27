@@ -43,7 +43,7 @@ func newAPIServer(listenAddr string, store Storage) *APIServer {
 
 func (s *APIServer) setupRoutes() {
 	s.router.HandleFunc("/", s.makeHTTPHandleFunc(s.handleAccount)).Methods("GET")
-	s.router.HandleFunc("/accounts", s.makeHTTPHandleFunc(s.handleGetAccount)).Methods("GET")
+	s.router.HandleFunc("/accounts", s.makeHTTPHandleFunc(s.handleAllAccounts)).Methods("GET")
 	s.router.HandleFunc("/accounts", s.makeHTTPHandleFunc(s.handleCreateAccount)).Methods("POST")
 	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleDeleteAccount)).Methods("DELETE")
 	s.router.HandleFunc("/accounts/transfer", s.makeHTTPHandleFunc(s.handleAccountTransfer)).Methods("POST")
@@ -73,12 +73,22 @@ func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error 
 	return err
 }
 
-func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) error {
-	account := newAccount("Imran", "Adil", "Cricket", 26)
+func (s *APIServer) handleAllAccounts(w http.ResponseWriter, r *http.Request) error {
+	accounts, err := s.storage.allAccounts()
 
-	err := writeJSON(w, http.StatusOK, account)
-	return err
+	if err != nil {
+		return err
+	}
+
+	return writeJSON(w, http.StatusOK, accounts)
 }
+
+// func (s *APIServer) handleGetAccount(w http.ResponseWriter, r *http.Request) error {
+// 	account := newAccount("Imran", "Adil", "Cricket", 26)
+
+// 	err := writeJSON(w, http.StatusOK, account)
+// 	return err
+// }
 
 func (s *APIServer) handleCreateAccount(w http.ResponseWriter, r *http.Request) error {
 	createAccountReq := new(createAccountRequest)

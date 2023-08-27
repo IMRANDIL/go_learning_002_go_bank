@@ -2,8 +2,23 @@ POST http://localhost:8080/accounts
 Content-Type: application/json
 
 {
-    "firstName": "Ali",
-    "lastName": "Imran Adil",
-    "hobby": "Programming",
-    "age": 30
+    "firstName": "Minhaj",
+    "lastName": "Praveen",
+    "hobby": "Playing Cricket",
+    "age":25
 }
+
+
+
+
+###
+
+GET http://localhost:8080/accounts
+Content-Type: application/json
+
+
+
+
+
+
+

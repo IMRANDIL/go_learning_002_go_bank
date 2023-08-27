@@ -12,6 +12,7 @@ type Storage interface {
 	deleteAccount(int) error
 	updateAccount(*Account) error
 	getAccountById(int) (*Account, error)
+	allAccounts() ([]*Account, error)
 }
 
 type PostgresStore struct {
@@ -69,7 +70,7 @@ func (s *PostgresStore) createAccountTable() error {
 }
 
 func (s *PostgresStore) createAccount(account *Account) error {
-	log.Printf("hitting the createAccount storage: %v", account)
+
 	query := `
         INSERT INTO accounts (first_name, last_name, hobby, age, account_number, balance)
         VALUES ($1, $2, $3, $4, $5, $6)
@@ -95,11 +96,51 @@ func (s *PostgresStore) createAccount(account *Account) error {
 	)
 
 	if err != nil {
-		log.Printf("Error inserting account: %v", err)
+		log.Printf("Error inserting account: %+v", err)
 		return err
 	}
 
 	return nil
+}
+
+func (s *PostgresStore) allAccounts() ([]*Account, error) {
+	query := `SELECT * FROM accounts;`
+
+	rows, err := s.db.Query(query)
+	if err != nil {
+		log.Printf("Error fetching accounts: %v", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var accounts []*Account
+
+	for rows.Next() {
+		account := &Account{}
+		err := rows.Scan(
+			&account.ID,
+			&account.FIRST_NAME,
+			&account.LAST_NAME,
+			&account.HOBBY,
+			&account.AGE,
+			&account.ACCOUNT,
+			&account.BALANCE,
+			&account.CREATED_AT,
+			&account.UPDATED_AT,
+		)
+		if err != nil {
+			log.Printf("Error scanning row: %v", err)
+			return nil, err
+		}
+		accounts = append(accounts, account)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Printf("Error iterating rows: %v", err)
+		return nil, err
+	}
+
+	return accounts, nil
 }
 
 func (s *PostgresStore) deleteAccount(id int) error {

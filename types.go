@@ -19,6 +19,8 @@ type Account struct {
 	AGE        int    `json:"age"`
 	ACCOUNT    int64  `json:"account"`
 	BALANCE    string `json:"balance"`
+	CREATED_AT string `json:"created_at"`
+	UPDATED_AT string `json:"updated_at"`
 }
 
 func newAccount(firstName, lastName, hobby string, age int) *Account {
@@ -28,7 +30,7 @@ func newAccount(firstName, lastName, hobby string, age int) *Account {
 		LAST_NAME:  lastName,
 		HOBBY:      hobby,
 		ACCOUNT:    int64(rand.Intn(100000000)),
-		// BALANCE:    strconv.Itoa(rand.Intn(1000000000)), // Convert int to string
-		AGE: age,
+		BALANCE:    "0",
+		AGE:        age,
 	}
 }
