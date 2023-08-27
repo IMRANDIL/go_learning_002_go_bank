@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"os"
 	"strconv"
 	"strings"
 
@@ -44,10 +45,12 @@ func withJWTAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
+		secret := os.Getenv("JWT_SECRET")
+
 		// Parse the JWT token
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 			// TODO: Replace with your actual JWT secret or public key
-			return []byte("your-secret-key"), nil
+			return []byte(secret), nil
 		})
 		if err != nil {
 			writeAPIError(w, http.StatusUnauthorized, "Invalid token")
@@ -104,7 +107,7 @@ func (s *APIServer) setupRoutes() {
 	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleDeleteAccount)).Methods("DELETE")
 	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleAccountById)).Methods("GET")
 	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleUpdateAccount)).Methods("PATCH")
-	s.router.HandleFunc("/accounts/transfer", s.makeHTTPHandleFunc(s.handleAccountTransfer)).Methods("POST")
+	s.router.HandleFunc("/accounts/transfer", withJWTAuth(s.makeHTTPHandleFunc(s.handleAccountTransfer))).Methods("POST")
 }
 
 func (s *APIServer) run() {
