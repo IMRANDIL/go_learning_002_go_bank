@@ -14,7 +14,7 @@ type Storage interface {
 	updateAccount(*Account) error
 	getAccountById(int) (*Account, error)
 	allAccounts() ([]*Account, error)
-	transferBalance(int, int, float64) error
+	transferBalance(int64, int64, float64) error
 }
 
 type PostgresStore struct {
@@ -239,7 +239,7 @@ func (s *PostgresStore) getAccountById(id int) (*Account, error) {
 	return account, nil
 }
 
-func (s *PostgresStore) transferBalance(fromAccountID, toAccountID int, amount float64) error {
+func (s *PostgresStore) transferBalance(fromAccountNumber, toAccountNumber int64, amount float64) error {
 	// Begin a new database transaction
 	tx, err := s.db.Begin()
 	if err != nil {
@@ -250,13 +250,13 @@ func (s *PostgresStore) transferBalance(fromAccountID, toAccountID int, amount f
 
 	// Check if both accounts exist
 	existsQuery := `
-		SELECT id
+		SELECT account_number
 		FROM accounts
-		WHERE id IN ($1, $2);
+		WHERE account_number IN ($1, $2);
 	`
 
-	var accountIDs []int
-	rows, err := tx.Query(existsQuery, fromAccountID, toAccountID)
+	var accountNumbers []int64
+	rows, err := tx.Query(existsQuery, fromAccountNumber, toAccountNumber)
 	if err != nil {
 		log.Printf("Error checking account existence: %v", err)
 		return err
@@ -264,15 +264,15 @@ func (s *PostgresStore) transferBalance(fromAccountID, toAccountID int, amount f
 	defer rows.Close()
 
 	for rows.Next() {
-		var id int
-		if err := rows.Scan(&id); err != nil {
+		var accountNumber int64
+		if err := rows.Scan(&accountNumber); err != nil {
 			log.Printf("Error scanning row: %v", err)
 			return err
 		}
-		accountIDs = append(accountIDs, id)
+		accountNumbers = append(accountNumbers, accountNumber)
 	}
 
-	if len(accountIDs) != 2 {
+	if len(accountNumbers) != 2 {
 		return fmt.Errorf("one or both accounts not found")
 	}
 
@@ -280,11 +280,11 @@ func (s *PostgresStore) transferBalance(fromAccountID, toAccountID int, amount f
 	fromAccountQuery := `
 		SELECT balance
 		FROM accounts
-		WHERE id = $1;
+		WHERE account_number = $1;
 	`
 
 	var fromBalance float64
-	err = tx.QueryRow(fromAccountQuery, fromAccountID).Scan(&fromBalance)
+	err = tx.QueryRow(fromAccountQuery, fromAccountNumber).Scan(&fromBalance)
 	if err != nil {
 		log.Printf("Error fetching balance: %v", err)
 		return err
@@ -300,10 +300,10 @@ func (s *PostgresStore) transferBalance(fromAccountID, toAccountID int, amount f
 		UPDATE accounts
 		SET balance = balance - $1,
 			updated_at = CURRENT_TIMESTAMP
-		WHERE id = $2;
+		WHERE account_number = $2;
 	`
 
-	_, err = tx.Exec(updateFromBalanceQuery, amount, fromAccountID)
+	_, err = tx.Exec(updateFromBalanceQuery, amount, fromAccountNumber)
 	if err != nil {
 		log.Printf("Error updating 'from' account balance: %v", err)
 		return err
@@ -314,10 +314,10 @@ func (s *PostgresStore) transferBalance(fromAccountID, toAccountID int, amount f
 		UPDATE accounts
 		SET balance = balance + $1,
 			updated_at = CURRENT_TIMESTAMP
-		WHERE id = $2;
+		WHERE account_number = $2;
 	`
 
-	_, err = tx.Exec(updateToBalanceQuery, amount, toAccountID)
+	_, err = tx.Exec(updateToBalanceQuery, amount, toAccountNumber)
 	if err != nil {
 		log.Printf("Error updating 'to' account balance: %v", err)
 		return err

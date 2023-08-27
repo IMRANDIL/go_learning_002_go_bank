@@ -2,6 +2,9 @@ package main
 
 import (
 	"math/rand"
+	"time"
+
+	_ "github.com/google/uuid"
 )
 
 type createAccountRequest struct {
@@ -30,8 +33,16 @@ func newAccount(firstName, lastName, hobby string, age int, balance float64) *Ac
 		FIRST_NAME: firstName,
 		LAST_NAME:  lastName,
 		HOBBY:      hobby,
-		ACCOUNT:    int64(rand.Intn(100000000)),
+		ACCOUNT:    generateUniqueAccountNumber(),
 		AGE:        age,
 		BALANCE:    balance,
 	}
+}
+
+func generateUniqueAccountNumber() int64 {
+	// Seed the random number generator with the current time
+	rand.Seed(time.Now().UnixNano())
+
+	// Generate a random int64 within the range of a bigint column
+	return rand.Int63n(9223372036854775807) // Max value for a signed 64-bit integer
 }

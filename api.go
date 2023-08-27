@@ -15,12 +15,12 @@ type APIError struct {
 }
 
 type transferRequest struct {
-	FromAccountID int     `json:"from_account_id"`
-	ToAccountID   int     `json:"to_account_id"`
+	FromAccountID int64   `json:"from_account_id"`
+	ToAccountID   int64   `json:"to_account_id"`
 	Amount        float64 `json:"amount"`
 }
 
-func writeJSON(w http.ResponseWriter, status int, v any) error {
+func writeJSON(w http.ResponseWriter, status int, v interface{}) error {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(v)
