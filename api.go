@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
+	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
 )
 
@@ -24,6 +26,43 @@ func writeJSON(w http.ResponseWriter, status int, v interface{}) error {
 	w.Header().Add("Content-Type", "application/json")
 	w.WriteHeader(status)
 	return json.NewEncoder(w).Encode(v)
+}
+
+func withJWTAuth(handlerFunc http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		// Get the Authorization header from the request
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			writeAPIError(w, http.StatusUnauthorized, "Missing authorization header")
+			return
+		}
+
+		// Extract the JWT token from the header
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+		if tokenString == authHeader {
+			writeAPIError(w, http.StatusUnauthorized, "Invalid authorization header")
+			return
+		}
+
+		// Parse the JWT token
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			// TODO: Replace with your actual JWT secret or public key
+			return []byte("your-secret-key"), nil
+		})
+		if err != nil {
+			writeAPIError(w, http.StatusUnauthorized, "Invalid token")
+			return
+		}
+
+		// Check if the token is valid
+		if !token.Valid {
+			writeAPIError(w, http.StatusUnauthorized, "Invalid token")
+			return
+		}
+
+		// Call the actual handler function if the token is valid
+		handlerFunc(w, r)
+	}
 }
 
 type apiFunc func(http.ResponseWriter, *http.Request) error
