@@ -120,6 +120,7 @@ func (s *APIServer) setupRoutes() {
 	s.router.HandleFunc("/users/signup", s.makeHTTPHandleFunc(s.handleSignup)).Methods("POST")
 	s.router.HandleFunc("/users/login", s.makeHTTPHandleFunc(s.handleLogin)).Methods("POST")
 	s.router.HandleFunc("/accounts", s.makeHTTPHandleFunc(s.handleAllAccounts)).Methods("GET")
+	s.router.HandleFunc("/user/details", withJWTAuth(s.makeHTTPHandleFunc(s.handleGetUserDetails))).Methods("GET")
 	s.router.HandleFunc("/accounts", withJWTAuth(s.makeHTTPHandleFunc(s.handleCreateAccount))).Methods("POST")
 	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleDeleteAccount)).Methods("DELETE")
 	s.router.HandleFunc("/accounts/{id}", s.makeHTTPHandleFunc(s.handleAccountById)).Methods("GET")
@@ -302,7 +303,46 @@ func (s *APIServer) handleUpdateAccount(w http.ResponseWriter, r *http.Request) 
 	return writeJSON(w, http.StatusOK, existingAccount)
 }
 
+func (s *APIServer) handleGetUserDetails(w http.ResponseWriter, r *http.Request) error {
+	// Get the user ID from the request context (assuming you set it in the middleware)
+	userID, ok := r.Context().Value("user_id").(int)
+	if !ok {
+		return writeAPIError(w, http.StatusUnauthorized, "Invalid user ID in request context")
+	}
+
+	// Call the storage method to retrieve user details
+	userDetails, err := s.storage.getUserDetails(userID)
+	if err != nil {
+		// Handle the error, for example, return a 404 Not Found response
+		if err.Error() == "user not found" {
+			return writeAPIError(w, http.StatusNotFound, "User not found")
+		}
+		return writeAPIError(w, http.StatusInternalServerError, "Internal server error")
+	}
+
+	// Return the user details in the response
+	return writeJSON(w, http.StatusOK, userDetails)
+}
+
 func (s *APIServer) handleAccountTransfer(w http.ResponseWriter, r *http.Request) error {
+	// Decode the transfer request details from the request body
+
+	// Get the user ID from the request context
+	userID, ok := r.Context().Value("user_id").(int)
+	if !ok {
+		return writeAPIError(w, http.StatusUnauthorized, "Invalid user ID in request context")
+	}
+	fmt.Println(userID)
+
+	// Fetch the user's account details using getUserDetails
+	user, err := s.storage.getUserDetails(userID)
+	if err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "Error fetching user details")
+		return nil
+	}
+	// Now you have the user's account information, including the "from" account
+	fromAccount := user.Accounts[0] // Assuming the first account in the slice is the "from" account
+	fromAccountNumber := fromAccount.ACCOUNT
 	// Decode the transfer request details from the request body
 
 	var transferReq transferRequest
@@ -312,15 +352,8 @@ func (s *APIServer) handleAccountTransfer(w http.ResponseWriter, r *http.Request
 		return nil
 	}
 
-	// Get the user ID from the request context
-	userID, ok := r.Context().Value("user_id").(int)
-	if !ok {
-		return writeAPIError(w, http.StatusUnauthorized, "Invalid user ID in request context")
-	}
-	fmt.Println(userID)
-
 	// Call the storage method to perform the balance transfer
-	err := s.storage.transferBalance(transferReq.FromAccountID, transferReq.ToAccountID, transferReq.Amount)
+	err = s.storage.transferBalance(fromAccountNumber, transferReq.ToAccountID, transferReq.Amount)
 	if err != nil {
 		// Handle different error scenarios
 		if err.Error() == "insufficient balance in the 'from' account" {

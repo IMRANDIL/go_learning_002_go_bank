@@ -1,18 +1,16 @@
 POST http://localhost:8080/accounts
 Content-Type: application/json
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTMyMjg1NTYsInVzZXJfaWQiOjV9.-m8qrdEp67lQDl8-6Q4qS979hrjLnMWVnaaYcKdFK68
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTM2NjYzMzgsInVzZXJfaWQiOjZ9.5_Q5JJL2ldVF6VeBUbDrwHeW8uECBqr2WQ5d7SDDrxQ
 
 {
-    "firstName": "Ali Imran",
+    "firstName": "Minhaj",
     "lastName": "Adil",
-    "hobby": "Coding",
+    "hobby": "Reading",
     "age":25,
-    "balance":95000
+    "balance":5000
     
     
 }
-
-
 
 
 ###
@@ -45,12 +43,11 @@ Content-Type: application/json
 ###
 
 POST http://localhost:8080/accounts/transfer
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTMyMjQ1NjIsInVzZXJfaWQiOjV9.TwmzNAJU0kUPxM9nwGnNCQLtwPkV-X466i4EFqOG-O0
-Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTM2NjY2MTEsInVzZXJfaWQiOjV9.blgYK1g03gA6p8wg83gU7Mq-txdq5K10WSt3aAWGWyc
 
 {
-   "from_account_id": 4192355307,
-   "to_account_id": 193807991,
+   
+   "to_account_id": 3331830224650428871,
    "amount": 9000
 }
 
@@ -62,7 +59,7 @@ POST  http://localhost:8080/users/signup
 Content-Type: application/json
 
 { 
-   "username": "aliimranadil2@gmail.com",
+   "username": "minhaj@gmail.com",
    "password": "Dil@2580123"
    
 }
@@ -78,3 +75,11 @@ Content-Type: application/json
    "password": "Dil@2580123"
    
 }
+
+
+###
+
+GET http://localhost:8080/user/details
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE2OTM2NjQxOTAsInVzZXJfaWQiOjV9.NCwu4kFaa1zxC25a3b6n4SPYK5CohOmlTSZwUf40iMY
+

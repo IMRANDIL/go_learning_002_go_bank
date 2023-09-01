@@ -21,6 +21,7 @@ type Storage interface {
 	getUserByUsername(string) (*User, error)
 	createUser(*User) error
 	authenticateUser(string, string) (*User, error)
+	getUserDetails(int) (getUserDetailsRequest, error)
 }
 
 type PostgresStore struct {
@@ -173,6 +174,7 @@ func (s *PostgresStore) allAccounts() ([]*Account, error) {
 		account := &Account{}
 		err := rows.Scan(
 			&account.ID,
+			&account.UserID,
 			&account.FIRST_NAME,
 			&account.LAST_NAME,
 			&account.HOBBY,
@@ -432,6 +434,107 @@ func (s *PostgresStore) createUser(user *User) error {
 	}
 
 	return nil
+}
+
+func (s *PostgresStore) getUserDetails(id int) (getUserDetailsRequest, error) {
+	// Initialize an empty getUserDetailsRequest struct to store the result
+	var user getUserDetailsRequest
+
+	query := `
+		SELECT
+			u.id,
+			u.username,
+			a.id AS account_id,
+			a.first_name AS account_first_name,
+			a.last_name AS account_last_name,
+			a.hobby AS account_hobby,
+			a.age AS account_age,
+			a.account_number AS bank_account,
+			a.balance AS account_balance
+			
+		FROM
+			users u
+		LEFT JOIN
+			accounts a
+		ON
+			u.id = a.user_id
+		WHERE
+			u.id = $1
+	`
+
+	rows, err := s.db.Query(query, id)
+	if err != nil {
+		log.Printf("Error retrieving user and accounts: %v", err)
+		return user, err
+	}
+	defer rows.Close()
+
+	// Map to store user and associated accounts
+	userAccountsMap := make(map[int]getUserDetailsRequest)
+
+	// Iterate through the rows and populate the user and accounts map
+	for rows.Next() {
+		var userID int
+		var username string
+		var accountID int
+		var accountFirstName, accountLastName, accountHobby string
+		var accountAge int
+		var accountAccount int64
+		var accountBalance float64
+
+		err := rows.Scan(
+			&userID,
+			&username,
+			&accountID,
+			&accountFirstName,
+			&accountLastName,
+			&accountHobby,
+			&accountAge,
+			&accountAccount,
+			&accountBalance,
+		)
+
+		if err != nil {
+			log.Printf("Error scanning row: %v", err)
+			return user, err
+		}
+
+		// Check if the user is already in the map, if not, create a new user
+		if _, ok := userAccountsMap[userID]; !ok {
+			user = getUserDetailsRequest{
+				ID:       userID,
+				Username: username,
+			}
+			userAccountsMap[userID] = user
+		}
+
+		// Create a temporary user variable to update the Accounts field
+		tempUser := userAccountsMap[userID]
+
+		// If there is an associated account, add it to the user's accounts slice
+		if accountID != 0 {
+			account := AccountsRequest{
+				ID:         accountID,
+				FIRST_NAME: accountFirstName,
+				LAST_NAME:  accountLastName,
+				HOBBY:      accountHobby,
+				AGE:        accountAge,
+				ACCOUNT:    accountAccount,
+				BALANCE:    accountBalance,
+			}
+			tempUser.Accounts = append(tempUser.Accounts, account)
+		}
+
+		// Update the user in the map with the temporary user
+		userAccountsMap[userID] = tempUser
+	}
+
+	// Check if the user exists, and return it along with associated accounts
+	if user, ok := userAccountsMap[id]; ok {
+		return user, nil
+	}
+
+	return user, fmt.Errorf("User not found")
 }
 
 func (s *PostgresStore) authenticateUser(username, password string) (*User, error) {

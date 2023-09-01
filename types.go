@@ -16,6 +16,22 @@ type createAccountRequest struct {
 	UserID     int     `json:"user_id"`
 }
 
+type AccountsRequest struct {
+	ID         int     `json:"id"`
+	FIRST_NAME string  `json:"firstName"`
+	LAST_NAME  string  `json:"lastName"`
+	HOBBY      string  `json:"hobby"`
+	AGE        int     `json:"age"`
+	ACCOUNT    int64   `json:"account"`
+	BALANCE    float64 `json:"balance"`
+}
+
+type getUserDetailsRequest struct {
+	ID       int               `json:"id"`
+	Username string            `json:"username"`
+	Accounts []AccountsRequest `json:"accounts"`
+}
+
 type Account struct {
 	ID         int       `json:"id"`
 	UserID     int       `json:"user_id"`
