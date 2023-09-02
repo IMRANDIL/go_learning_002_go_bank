@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/gorilla/mux"
@@ -128,12 +130,69 @@ func (s *APIServer) setupRoutes() {
 	s.router.HandleFunc("/accounts/transfer", withJWTAuth(s.makeHTTPHandleFunc(s.handleAccountTransfer))).Methods("POST")
 }
 
+// func (s *APIServer) run() {
+
+// 	s.setupRoutes()
+// 	fmt.Printf("Server listening on %s...\n", s.listenAddr)
+// 	http.ListenAndServe(s.listenAddr, s.router)
+
+// }
+
+// func (s *APIServer) run() {
+// 	s.setupRoutes()
+
+// 	// Use a WaitGroup to wait for the server to finish
+// 	var wg sync.WaitGroup
+// 	wg.Add(1)
+
+// 	go func() {
+// 		defer wg.Done()
+
+// 		fmt.Printf("Server listening on %s...\n", s.listenAddr)
+// 		err := http.ListenAndServe(s.listenAddr, s.router)
+// 		if err != nil {
+// 			log.Fatalf("HTTP server error: %v", err)
+// 		}
+// 	}()
+
+// 	// Wait for the server to finish
+// 	wg.Wait()
+// }
+
 func (s *APIServer) run() {
-
 	s.setupRoutes()
-	fmt.Printf("Server listening on %s...\n", s.listenAddr)
-	http.ListenAndServe(s.listenAddr, s.router)
 
+	// Create a channel to collect responses from Goroutines
+	responseChan := make(chan error, 1)
+
+	// Use a WaitGroup to wait for Goroutines to finish
+	var wg sync.WaitGroup
+
+	// Start a Goroutine to handle incoming requests
+	go func() {
+		defer close(responseChan)
+
+		fmt.Printf("Server listening on %s...\n", s.listenAddr)
+		err := http.ListenAndServe(s.listenAddr, s.router)
+		responseChan <- err
+	}()
+
+	// Wait for the server to finish
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		for {
+			select {
+			case err := <-responseChan:
+				if err != nil {
+					log.Fatalf("HTTP server error: %v", err)
+				}
+			}
+		}
+	}()
+
+	// Wait for the server and all Goroutines to finish
+	wg.Wait()
 }
 
 // func (s *APIServer) handleAccount(w http.ResponseWriter, r *http.Request) error {

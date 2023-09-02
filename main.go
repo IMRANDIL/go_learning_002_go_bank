@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 )
 
@@ -16,9 +15,7 @@ func main() {
 	}
 
 	// fmt.Printf("%+v\n", store)
-	fmt.Println("Before creating APIServer")
 	server := newAPIServer(":8080", store)
-	fmt.Println("After creating APIServer")
 	server.setupRoutes()
 	server.run()
 }
