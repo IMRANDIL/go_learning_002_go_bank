@@ -463,6 +463,7 @@ func (s *PostgresStore) getUserDetails(id int) (getUserDetailsRequest, error) {
 	`
 
 	rows, err := s.db.Query(query, id)
+	fmt.Println(rows)
 	if err != nil {
 		log.Printf("Error retrieving user and accounts: %v", err)
 		return user, err

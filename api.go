@@ -356,8 +356,8 @@ func (s *APIServer) handleAccountTransfer(w http.ResponseWriter, r *http.Request
 	err = s.storage.transferBalance(fromAccountNumber, transferReq.ToAccountID, transferReq.Amount)
 	if err != nil {
 		// Handle different error scenarios
-		if err.Error() == "insufficient balance in the 'from' account" {
-			writeAPIError(w, http.StatusBadRequest, "Insufficient balance in the 'from' account")
+		if err.Error() == "insufficient balance in the account" {
+			writeAPIError(w, http.StatusBadRequest, "Insufficient balance in the account")
 			return nil
 		}
 		if err.Error() == "one or both accounts not found" {
