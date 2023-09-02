@@ -159,6 +159,42 @@ func (s *APIServer) setupRoutes() {
 // 	wg.Wait()
 // }
 
+// func (s *APIServer) run() {
+// 	s.setupRoutes()
+
+// 	// Create a channel to collect responses from Goroutines
+// 	responseChan := make(chan error, 1)
+
+// 	// Use a WaitGroup to wait for Goroutines to finish
+// 	var wg sync.WaitGroup
+
+// 	// Start a Goroutine to handle incoming requests
+// 	go func() {
+// 		defer close(responseChan)
+
+// 		fmt.Printf("Server listening on %s...\n", s.listenAddr)
+// 		err := http.ListenAndServe(s.listenAddr, s.router)
+// 		responseChan <- err
+// 	}()
+
+// 	// Wait for the server to finish
+// 	wg.Add(1)
+// 	go func() {
+// 		defer wg.Done()
+// 		for {
+// 			select {
+// 			case err := <-responseChan:
+// 				if err != nil {
+// 					log.Fatalf("HTTP server error: %v", err)
+// 				}
+// 			}
+// 		}
+// 	}()
+
+// 	// Wait for the server and all Goroutines to finish
+// 	wg.Wait()
+// }
+
 func (s *APIServer) run() {
 	s.setupRoutes()
 
@@ -181,13 +217,9 @@ func (s *APIServer) run() {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		for {
-			select {
-			case err := <-responseChan:
-				if err != nil {
-					log.Fatalf("HTTP server error: %v", err)
-				}
-			}
+		err := <-responseChan
+		if err != nil {
+			log.Fatalf("HTTP server error: %v", err)
 		}
 	}()
 
