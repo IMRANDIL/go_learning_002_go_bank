@@ -16,7 +16,7 @@ type Storage interface {
 	deleteAccount(int) error
 	updateAccount(*Account) error
 	getAccountById(int) (*Account, error)
-	allAccounts() ([]*Account, error)
+	allAccounts(int) ([]*Account, error)
 	transferBalance(int64, int64, float64) error
 	getUserByUsername(string) (*User, error)
 	createUser(*User) error
@@ -158,42 +158,54 @@ func (s *PostgresStore) createAccount(account *Account) error {
 	return nil
 }
 
-func (s *PostgresStore) allAccounts() ([]*Account, error) {
-	query := `SELECT * FROM accounts;`
-
-	rows, err := s.db.Query(query)
-	if err != nil {
-		log.Printf("Error fetching accounts: %v", err)
-		return nil, err
-	}
-	defer rows.Close()
-
+func (s *PostgresStore) allAccounts(batchSize int) ([]*Account, error) {
 	var accounts []*Account
+	offset := 0
 
-	for rows.Next() {
-		account := &Account{}
-		err := rows.Scan(
-			&account.ID,
-			&account.UserID,
-			&account.FIRST_NAME,
-			&account.LAST_NAME,
-			&account.HOBBY,
-			&account.AGE,
-			&account.ACCOUNT,
-			&account.BALANCE,
-			&account.CREATED_AT,
-			&account.UPDATED_AT,
-		)
+	for {
+		query := `SELECT * FROM accounts ORDER BY id ASC LIMIT $1 OFFSET $2;`
+
+		rows, err := s.db.Query(query, batchSize, offset)
 		if err != nil {
-			log.Printf("Error scanning row: %v", err)
+			log.Printf("Error fetching accounts: %v", err)
 			return nil, err
 		}
-		accounts = append(accounts, account)
-	}
 
-	if err := rows.Err(); err != nil {
-		log.Printf("Error iterating rows: %v", err)
-		return nil, err
+		var batchAccounts []*Account
+
+		for rows.Next() {
+			account := &Account{}
+			err := rows.Scan(
+				&account.ID,
+				&account.UserID,
+				&account.FIRST_NAME,
+				&account.LAST_NAME,
+				&account.HOBBY,
+				&account.AGE,
+				&account.ACCOUNT,
+				&account.BALANCE,
+				&account.CREATED_AT,
+				&account.UPDATED_AT,
+			)
+			if err != nil {
+				log.Printf("Error scanning row: %v", err)
+				return nil, err
+			}
+			batchAccounts = append(batchAccounts, account)
+		}
+
+		if err := rows.Err(); err != nil {
+			log.Printf("Error iterating rows: %v", err)
+			return nil, err
+		}
+
+		// If there are no more rows, break the loop
+		if len(batchAccounts) == 0 {
+			break
+		}
+
+		accounts = append(accounts, batchAccounts...)
+		offset += batchSize
 	}
 
 	return accounts, nil

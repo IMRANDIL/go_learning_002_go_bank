@@ -153,7 +153,8 @@ func (s *APIServer) run() {
 // }
 
 func (s *APIServer) handleAllAccounts(w http.ResponseWriter, r *http.Request) error {
-	accounts, err := s.storage.allAccounts()
+	batchSize := 10000
+	accounts, err := s.storage.allAccounts(batchSize)
 
 	if err != nil {
 		return err
